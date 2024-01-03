@@ -71,7 +71,7 @@ mkdir -p apps/nxp_bms
 ```
 Clone this repository in that folder
 ```bash
-(cd apps/nxp_bms; git clone https://github.com/NXPHoverGames/RDDRONE-BMS772.git BMS_v1)
+(cd apps/nxp_bms; git clone https://git3.fsoft.com.vn/GROUP/DAP1UAVFP/BMS/bms-nxp.git BMS_v1)
 ```
 Checkout the public regulated data types.
 ```bash

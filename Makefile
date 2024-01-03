@@ -72,7 +72,7 @@ CSRCS   += src/a1007.c
 CSRCS   += src/SMBus.c
 CSRCS   += src/i2c.c
 CSRCS   += src/power.c
-CSRCS   += src/display.c
+# CSRCS   += src/display.c
 
 MAINSRC = src/main.c
 CFLAGS  += -I inc

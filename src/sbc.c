@@ -69,6 +69,7 @@
 #define WRITE_BIT                       0
 
 #define UJA1169TK_F_3_ID                0xE9
+#define UJA1169ATK_3_ID					0xC9
 
 #define WATCHDOG_CTRL_REG_ADR           0x00
 #define MODE_CTRL_REG_ADR               0x01
@@ -762,12 +763,15 @@ int sbc_verifySbc(void)
         // return the error
         return lvRetValue;
     }
+	
+	// output to the user
+    cli_printfError("SBC Dev ID: 0x%x\n", rxData[1]);
 
     // make it be wrong again
     lvRetValue = -1;
 
     // check if the returned ID is expected
-    if(rxData[1] == UJA1169TK_F_3_ID)
+    if((rxData[1] == UJA1169TK_F_3_ID) || (rxData[1] == UJA1169ATK_3_ID))
     {
         // output to the user 
         //cli_printf("SBC ID verified!\n");

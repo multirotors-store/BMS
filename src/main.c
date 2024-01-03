@@ -56,7 +56,8 @@
 #include "SMBus.h"
 #include "i2c.h"
 #include "power.h"
-#include "display.h"
+
+//#include "display.h"
 
 //#warning each semaphore used to signal a task needs to call sem_setprotocol(&sem, SEM_PRIO_NONE); after sem_init!!!
 
@@ -160,9 +161,13 @@ bool gSetUavcanMessagesInitialized = false;
 pthread_mutex_t gSetNfcUpdateLock;
 bool gSetNfcUpdateLockInitialized = false;
 
+// Disable display related variables
+#if 0
 //! mutex for enabling or disabling the display Update
 pthread_mutex_t gSetDisplayUpdateLock;
 bool gSetDisplayUpdateLockInitialized = false;
+#endif
+
 
 /*! @brief  semaphore to do the main loop*/
 static sem_t gMainLoopSem;
@@ -365,6 +370,8 @@ static int setNGetEnableUavcanMessages(bool setNGet, bool enable);
  */
 static int setNGetEnableNFCUpdates(bool setNGet, bool enable);
 
+// Disable display related function
+#if 0
 /*!
  * @brief   function that is used to enable or disable the display update 
  *          or get the value if it should update the display.
@@ -378,6 +385,8 @@ static int setNGetEnableNFCUpdates(bool setNGet, bool enable);
  * @return  < 0 if not OK, >= 0 if OK.
  */
 static int setNGetEnableDisplayUpdates(bool setNGet, bool enable);
+#endif
+
 
 /*!
  * @brief   Function that is used to call a usleep (task switch as well)
@@ -498,6 +507,8 @@ int bms_main(int argc, char *argv[])
         gSetNfcUpdateLockInitialized = true;
     }
 
+    // Disable display related logic
+    #if 0
     // check if not initialized 
     if(!gSetDisplayUpdateLockInitialized)
     {
@@ -505,6 +516,7 @@ int bms_main(int argc, char *argv[])
         pthread_mutex_init(&gSetDisplayUpdateLock, NULL);
         gSetDisplayUpdateLockInitialized = true;
     }
+	#endif
 
     // initialize the functions
 
@@ -736,6 +748,9 @@ int bms_main(int argc, char *argv[])
         cli_printfError("main ERROR: failed to initialize SMBus! code %d\n", lvRetValue);
     }
 
+
+// Disable display module
+#if 0
     // initialze the display
     lvRetValue = display_initialize(resetCauseExWatchdog);
     if(lvRetValue)
@@ -750,6 +765,7 @@ int bms_main(int argc, char *argv[])
             cli_printf("SELF-TEST DISPLAY: \e[31mFAIL\e[39m\n");
         }
     }
+#endif
 
     // check if a command was given
     if(argc > 1)
@@ -1484,12 +1500,15 @@ static int mainTaskFunc(int argc, char *argv[])
                         cli_printfError("main ERROR: Could not enable NFC update!\n");
                     }
 
+					// Disable display related logic
+					#if 0
                     // turn on the display update
                     if(setNGetEnableDisplayUpdates(true, true) < 0)
                     {
                         // output error
                         cli_printfError("main ERROR: Could not enable display update!\n");
                     }
+					#endif
 
                     // enable CC overflow on the fault pin
                     batManagement_setCCOvrFltEnable(true);
@@ -1782,12 +1801,15 @@ static int mainTaskFunc(int argc, char *argv[])
                                 cli_printfError("main ERROR: Could not disable NFC update!\n");
                             }
 
+							// Disable display related logic
+							#if 0
                             // turn off the display update
                             if(setNGetEnableDisplayUpdates(true, false) < 0)
                             {
                                 // output error
                                 cli_printfError("main ERROR: Could not disable display update!\n");
                             }
+							#endif
 
                             // set the SMBus current to 0
                             SMBus_updateInformation(true);
@@ -2148,12 +2170,15 @@ static int mainTaskFunc(int argc, char *argv[])
                                         cli_printfError("main ERROR: Could not enable NFC update!\n");
                                     }
 
+									// Disable display related logic
+									#if 0
                                     // turn on the display update
                                     if(setNGetEnableDisplayUpdates(true, true) < 0)
                                     {
                                         // output error
                                         cli_printfError("main ERROR: Could not enable display update!\n");
                                     }
+									#endif
 
                                     // go back to charge with CB
                                     setChargeState(CHARGE_CB);
@@ -2226,12 +2251,15 @@ static int mainTaskFunc(int argc, char *argv[])
                                         cli_printfError("main ERROR: Could not enable NFC update!\n");
                                     }
 
+									// Disable display related logic
+									#if 0
                                     // turn on the display update
                                     if(setNGetEnableDisplayUpdates(true, true) < 0)
                                     {
                                         // output error
                                         cli_printfError("main ERROR: Could not enable display update!\n");
                                     }
+									#endif
 
                                     // go to charging complete
                                     setChargeState(CHARGE_COMPLETE);
@@ -2484,12 +2512,15 @@ static int mainTaskFunc(int argc, char *argv[])
                             cli_printfError("main ERROR: Could not enable NFC update!\n");
                         }
 
+						// Disable display related logic
+						#if 0
                         // turn on the display update
                         if(setNGetEnableDisplayUpdates(true, true) < 0)
                         {
                             // output error
                             cli_printfError("main ERROR: Could not enable display update!\n");
                         }
+						#endif
                     }
                 }
 
@@ -2565,12 +2596,15 @@ static int mainTaskFunc(int argc, char *argv[])
                         cli_printfError("main ERROR: Could not disable NFC update!\n");
                     }
 
+					// Disable display related logic
+					#if 0
                     // turn on the display update
                     if(setNGetEnableDisplayUpdates(true, false) < 0)
                     {
                         // output error
                         cli_printfError("main ERROR: Could not enable display update!\n");
                     }
+					#endif
 
                     // set the SMBus current to 0
                     SMBus_updateInformation(true);
@@ -3001,12 +3035,15 @@ static int mainTaskFunc(int argc, char *argv[])
                         cli_printfError("main ERROR: Could not enable NFC update!\n");
                     }
 
+					// Disable display related logic
+					#if 0
                     // turn on the display update
                     if(setNGetEnableDisplayUpdates(true, true) < 0)
                     {
                         // output error
                         cli_printfError("main ERROR: Could not enable display update!\n");
                     }
+					#endif
 
                     cli_printf("FAULT mode\n");
 
@@ -3209,12 +3246,15 @@ static int mainTaskFunc(int argc, char *argv[])
                         cli_printfError("main ERROR: Could not enable NFC update!\n");
                     }
 
+					// Disable display related logic
+					#if 0
                     // turn on the display update
                     if(setNGetEnableDisplayUpdates(true, true) < 0)
                     {
                         // output error
                         cli_printfError("main ERROR: Could not enable display update!\n");
                     }
+					#endif
 
                     // turn on the measurements if not on
                     batManagement_updateMeasurementsOn(true);
@@ -3354,12 +3394,15 @@ static int mainTaskFunc(int argc, char *argv[])
                         cli_printfError("main ERROR: Could not disable NFC update!\n");
                     }
 
+					// Disable display related logic
+					#if 0
                     // turn off the display update
                     if(setNGetEnableDisplayUpdates(true, false) < 0)
                     {
                         // output error
                         cli_printfError("main ERROR: Could not disable display update!\n");
                     }
+					#endif
 
                     // set the SMBus current to 0
                     SMBus_updateInformation(true);
@@ -4006,6 +4049,8 @@ static int updaterTaskFunc(int argc, char *argv[])
             cli_printfError("updater ERROR: Can't update CLI!\n");
         }
 
+		// Disable display related logic
+		#if 0
         // TODO add display on even lower priority
 
         // check if the display needs to be updated
@@ -4022,6 +4067,7 @@ static int updaterTaskFunc(int argc, char *argv[])
                 display_uninitialize();
             }
         }
+		#endif
     }
 
     // for compiler
@@ -4908,6 +4954,8 @@ static int setNGetEnableNFCUpdates(bool setNGet, bool enable)
     return lvRetValue;
 }
 
+// Disable display related function
+#if 0
 /*!
  * @brief   function that is used to enable or disable the display update 
  *          or get the value if it should update the display.
@@ -4954,6 +5002,8 @@ static int setNGetEnableDisplayUpdates(bool setNGet, bool enable)
     // return
     return lvRetValue;
 }
+#endif
+
 
 /*!
  * @brief   Function that is used to call a usleep (task switch as well)

@@ -234,10 +234,10 @@ static inline int8_t reg_drone_service_battery_Status_0_2_serialize_(
 
 
 
-    {   // void64
-        (void) memset(&buffer[offset_bits / 8U], 0, 8);
-        offset_bits += 64UL;
-    }
+    // {   // void64
+    //     (void) memset(&buffer[offset_bits / 8U], 0, 8);
+    //     offset_bits += 64UL;
+    // }
 
 
     if (offset_bits % 8U != 0U)  // Pad to 8 bits. TODO: Eliminate redundant padding checks.
@@ -421,8 +421,8 @@ static inline int8_t reg_drone_service_battery_Status_0_2_deserialize_(
 
 
 
-    // void64
-    offset_bits += 64;
+    // // void64
+    // offset_bits += 64;
 
 
     offset_bits = (offset_bits + 7U) & ~(size_t) 7U;  // Align on 8 bits.
