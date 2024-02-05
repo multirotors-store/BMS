@@ -2,23 +2,23 @@
  * nxp_bms/BMS_v1/src/sbc.c
  *
  * BSD 3-Clause License
- * 
+ *
  * Copyright 2020-2021 NXP
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the copyright holder nor the names of its
  *    contributors may be used to endorse or promote products derived from
  *    this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -69,13 +69,13 @@
 #define WRITE_BIT                       0
 
 #define UJA1169TK_F_3_ID                0xE9
-#define UJA1169ATK_3_ID					0xC9
+#define UJA1169ATK_3_ID                 0xC9
 
 #define WATCHDOG_CTRL_REG_ADR           0x00
 #define MODE_CTRL_REG_ADR               0x01
 #define MAIN_STATUS_REG_ADR             0x03
 #define WATCHDOG_STATUS_REG_ADR         0x05
-#define REGULATOR_CTRL_REG_ADR          0x10 
+#define REGULATOR_CTRL_REG_ADR          0x10
 #define CAN_CTRL_REG_ADR                0x20
 #define WAKE_PIN_STATUS_REG_ADR         0x4B
 #define WAKE_PIN_ENABLE_REG_ADR         0x4C
@@ -128,7 +128,7 @@
 #define SBC_CONF_CTRL_FNMC_BIT          3
 
 // watchdog register can only be written in standby mode!
-#define WATCHDOG_CTRL_WMC_AUTONOM       0x1     
+#define WATCHDOG_CTRL_WMC_AUTONOM       0x1    
 #define WATCHDOG_CTRL_WMC_TIMEOUT       0x2
 #define WATCHDOG_CTRL_WMC_WINDOW        0x4
 #define WATCHDOG_CTRL_WMC_MASK          0x7
@@ -152,11 +152,13 @@
 #define WATCHDOG_STATUS_FNMS_MASK       0x1
 
 #define REGULATOR_CTRL_PDC_DEFAULT      0
+#define REGULATOR_CTRL_PDC_HIGH         1
 #define REGULATOR_CTRL_V2C_OFF          0
 #define REGULATOR_CTRL_V2C_NORMAL       1
 #define REGULATOR_CTRL_V2C_ALL_NRST     2
 #define REGULATOR_CTRL_V2C_ALL_RST      3
 #define REGULATOR_CTRL_V2C_MASK         0x0C
+#define REGULATOR_CTRL_PDC_MASK         0x40
 
 #define CAN_CTRL_CFDC_CANFD_DIS         0
 #define CAN_CTRL_CFDC_CANFD_EN          1
@@ -169,7 +171,7 @@
 #define CAN_CTRL_CMC_ACT_UV_DIS         2
 #define CAN_CTRL_CMC_LIS                3
 
-// set CAN FD OFF, disable CAN selective wake-up, Active mode (when the SBC is in Normal mode); 
+// set CAN FD OFF, disable CAN selective wake-up, Active mode (when the SBC is in Normal mode);
 // CAN supply undervoltage detection disabled
 #define CAN_CTRL_REG_VAL                (CAN_CTRL_CFDC_CANFD_DIS << CAN_CTRL_CFDC_BIT) + \
                                         (CAN_CTRL_PNCOK_INV << CAN_CTRL_PNCOK_BIT) + \
@@ -195,7 +197,7 @@
 #define SBC_CONF_CTRL_SDMC_OFF          0
 #define SBC_CONF_CTRL_SDMC_ON           1
 #define SBC_CONF_CTRL_SLPC_ACC          0
-#define SBC_CONF_CTRL_SLPC_IGN          1       
+#define SBC_CONF_CTRL_SLPC_IGN          1      
 
 // set the Forced normal mode off, to go in the other modes
 // set the Software Development mode on to disable the watchdog
@@ -212,7 +214,7 @@
 #define TRANSC_EVENT_STAT_MASK          0x33
 #define WAKE_PIN_EVENT_STAT_MASK        0x3
 #define WAKE_PIN_EN_WRITE_MASK          0x3
-#define SBC_CONF_CTRL_REG_WRITE_MASK    0x3D 
+#define SBC_CONF_CTRL_REG_WRITE_MASK    0x3D
 #define START_UP_CTRL_REG_WRITE_MASK    0x38
 #define CAN_CTRL_WRITE_MASK             0x73
 
@@ -237,7 +239,7 @@
 // output a warning if debug assertions are enabled
 #ifdef CONFIG_DEBUG_ASSERTIONS
 #   ifdef DISABLE_WATCHDOG
-        #warning Watchdog is disabled!! 
+        #warning Watchdog is disabled!!
 #   endif
 #endif
 
@@ -252,7 +254,7 @@
 static bool gSbcInitialized = false;
 
 /*! @brief  mutex for controlling the watchdog */
-static pthread_mutex_t gWatchdogLock;   
+static pthread_mutex_t gWatchdogLock;  
 
 /*! @brief variable to indicate of it is initialized */
 static bool gWatchdogLockInitialized = false;
@@ -260,18 +262,18 @@ static bool gWatchdogLockInitialized = false;
 /****************************************************************************
  * private Functions
  ****************************************************************************/
-/*! 
+/*!
  * @brief   this function is used to program the START_UP_CTRL_REG, SBC_CONF_CTRL_REG, MTPNV_CRC_CTRL
  *          Make sure it can be programmed
  */
 int programNVMPSRegisters(void);
 
-/*! 
+/*!
  * @brief   this function is used to check if the NRST pin is connected to the SBC
  *
  * @param   none
  *
- * @return  1 if OK, 0 if not OK and negative if error 
+ * @return  1 if OK, 0 if not OK and negative if error
  */
 int checkNrstLine(void);
 
@@ -279,7 +281,7 @@ int checkNrstLine(void);
  * public functions
  ****************************************************************************/
 /*!
- * @brief   this function is used to initialze the SBC 
+ * @brief   this function is used to initialze the SBC
  *          
  * @param   skipSelfTest if this is true it will skip the self-test
  *
@@ -291,7 +293,7 @@ int sbc_initialize(bool skipSelfTest)
     uint8_t txData[2];
     uint8_t rxData[2], rxData2[2];
 
-    // check if initialized 
+    // check if initialized
     if(!gSbcInitialized)
     {
 
@@ -327,18 +329,18 @@ int sbc_initialize(bool skipSelfTest)
                 // output to the user and return
                 cli_printfError("SBC ERROR: Failed to verify the NRST line!\n");
                 cli_printf("Check the NRST line, jumper J6 needs to be closed!\n");
-                
+               
                 // return error
                 lvRetValue = -1;
                 return lvRetValue;
             }
 
-            // check the SBC 
+            // check the SBC
             if(sbc_verifySbc())
             {
                 // output to the user and return
                 cli_printfError("SBC ERROR: Failed to verify the SBC!\n");
-                
+               
                 // return error
                 lvRetValue = -1;
                 return lvRetValue;
@@ -346,7 +348,7 @@ int sbc_initialize(bool skipSelfTest)
         }
 
         // check if the NVMPS registors have the right values (SBC_CONF_CTRL_REG_ADR and START_UP_CTRL_REG_ADR)
-        // read the SBC_CONF_CTRL_REG 
+        // read the SBC_CONF_CTRL_REG
         txData[0] = (SBC_CONF_CTRL_REG_ADR << 1) + READ_BIT;
         txData[1] = 0;
 
@@ -389,7 +391,7 @@ int sbc_initialize(bool skipSelfTest)
         }
 
         // check if the values are not ok
-        if(!((((rxData[1] & SBC_CONF_CTRL_REG_WRITE_MASK) ==  SBC_CONF_CTRL_REG_VAL) && 
+        if(!((((rxData[1] & SBC_CONF_CTRL_REG_WRITE_MASK) ==  SBC_CONF_CTRL_REG_VAL) &&
             ((rxData2[1] & START_UP_CTRL_REG_WRITE_MASK) ==  START_UP_CTRL_REG_VAL))))
         {
             cli_printf("NVMS registers don't have the right value!\n");
@@ -441,11 +443,11 @@ int sbc_initialize(bool skipSelfTest)
                 // return the error
                 return lvRetValue;
             }
-        }       
+        }      
 
         // sleep for (20us) (Tto(SPI))
         usleep(20);
-        
+       
         // set the local wakeup from low to high
         txData[0] = (WAKE_PIN_ENABLE_REG_ADR << 1) + WRITE_BIT;
         txData[1] = WAKE_PIN_ENABLE_REG_VAL;
@@ -500,12 +502,12 @@ int sbc_initialize(bool skipSelfTest)
             return lvRetValue;
         }
 
-        // get the CAN FD mode 
+        // get the CAN FD mode
         if(data_getParameter(UAVCAN_FD_MODE, &rxData2[0], NULL) == NULL)
         {
            cli_printfError("SBC ERROR: couldn't get CANFD mode\n");
            rxData2[0] = UAVCAN_FD_MODE_DEFAULT;
-        } 
+        }
         // write the CAN control register
         txData[0] = (CAN_CTRL_REG_ADR << 1) + WRITE_BIT;
         txData[1] = ((CAN_CTRL_REG_VAL) | (rxData2[0] << CAN_CTRL_CFDC_BIT));
@@ -548,12 +550,12 @@ int sbc_initialize(bool skipSelfTest)
 #endif
 
         // check if the write went not ok
-        if(((CAN_CTRL_REG_VAL) | (rxData2[0] << CAN_CTRL_CFDC_BIT)) != 
+        if(((CAN_CTRL_REG_VAL) | (rxData2[0] << CAN_CTRL_CFDC_BIT)) !=
            (rxData[1] & CAN_CTRL_WRITE_MASK))
         {
             // print to the user
-            cli_printfError("SBC ERROR: failed to verify CAN control! %d != %d\n", 
-                ((CAN_CTRL_REG_VAL) | (rxData2[0] << CAN_CTRL_CFDC_BIT)), 
+            cli_printfError("SBC ERROR: failed to verify CAN control! %d != %d\n",
+                ((CAN_CTRL_REG_VAL) | (rxData2[0] << CAN_CTRL_CFDC_BIT)),
                 (rxData[1] & CAN_CTRL_WRITE_MASK));
 
             // return error
@@ -561,7 +563,7 @@ int sbc_initialize(bool skipSelfTest)
             return lvRetValue;
         }
 
-        // set V2 on in normal mode 
+        // set V2 on in normal mode
         // read the Regulator control register
         txData[0] = (REGULATOR_CTRL_REG_ADR << 1) + READ_BIT;
         txData[1] = 0;
@@ -583,32 +585,18 @@ int sbc_initialize(bool skipSelfTest)
         cli_printf("REGULATOR_CTRL_REG R RX0: %d, RX1: %d\n", rxData[0], rxData[1]);
 #endif
 
-        // check if not ok 
-        if((rxData[1] & REGULATOR_CTRL_V2C_MASK) != 
+        // check if not ok
+        if((rxData[1] & REGULATOR_CTRL_V2C_MASK) !=
             (REGULATOR_CTRL_V2C_NORMAL << REGULATOR_CTRL_V2C_BIT))
         {
             // write the right value
             // clear the V2C bits
-            txData[1] = rxData[1] & ~(REGULATOR_CTRL_V2C_MASK); 
+            txData[1] = rxData[1] & ~(REGULATOR_CTRL_V2C_MASK);
 
-            // make sure V2 is on in normal mode 
+            // make sure V2 is on in normal mode
             txData[1] |= (REGULATOR_CTRL_V2C_NORMAL << REGULATOR_CTRL_V2C_BIT);
             txData[0] = (REGULATOR_CTRL_REG_ADR << 1) + WRITE_BIT;
 
-            // write the data to the SBC and receive data
-            lvRetValue = spi_BMSTransferData(SBC_SPI_BUS, txData, rxData);
-
-            // check for errors
-            if(lvRetValue)
-            {
-                // output to the user
-                cli_printfError("SBC ERROR: failed to read REGULATOR_CTRL_REG! %d\n", lvRetValue);
-
-                // return the error
-                return lvRetValue;
-            }
-
-            // read the register again to verify it 
             // write the data to the SBC and receive data
             lvRetValue = spi_BMSTransferData(SBC_SPI_BUS, txData, rxData);
 
@@ -622,12 +610,26 @@ int sbc_initialize(bool skipSelfTest)
                 return lvRetValue;
             }
 
+            // read the register again to verify it
+            // write the data to the SBC and receive data
+            lvRetValue = spi_BMSTransferData(SBC_SPI_BUS, txData, rxData);
+
+            // check for errors
+            if(lvRetValue)
+            {
+                // output to the user
+                cli_printfError("SBC ERROR: failed to read REGULATOR_CTRL_REG! %d\n", lvRetValue);
+
+                // return the error
+                return lvRetValue;
+            }
+
 #ifdef DEBUG_SBC_SPI
             cli_printf("REGULATOR_CTRL_REG R RX0: %d, RX1: %d\n", rxData[0], rxData[1]);
 #endif
 
-            // check if not ok 
-            if((rxData[1] & REGULATOR_CTRL_V2C_MASK) != 
+            // check if not ok
+            if((rxData[1] & REGULATOR_CTRL_V2C_MASK) !=
                 (REGULATOR_CTRL_V2C_NORMAL << REGULATOR_CTRL_V2C_BIT))
             {
                 // error
@@ -639,7 +641,59 @@ int sbc_initialize(bool skipSelfTest)
                 return lvRetValue;
             }
         }
-        
+
+
+// Set PDC (power distribution control) bit
+txData[1] = (REGULATOR_CTRL_PDC_HIGH << REGULATOR_CTRL_PDC_BIT);
+        txData[0] = (REGULATOR_CTRL_REG_ADR << 1) + WRITE_BIT;
+
+        // write the data to the SBC and receive data
+        lvRetValue = spi_BMSTransferData(SBC_SPI_BUS, txData, rxData);
+
+        // check for errors
+        if(lvRetValue)
+        {
+            // output to the user
+            cli_printfError("SBC ERROR: failed to write REGULATOR_CTRL_REG! %d\n", lvRetValue);
+
+            // return the error
+            return lvRetValue;
+        }
+
+        // read the register again to verify it
+        // write the data to the SBC and receive data
+        lvRetValue = spi_BMSTransferData(SBC_SPI_BUS, txData, rxData);
+
+        // check for errors
+        if(lvRetValue)
+        {
+            // output to the user
+            cli_printfError("SBC ERROR: failed to read REGULATOR_CTRL_REG! %d\n", lvRetValue);
+
+            // return the error
+            return lvRetValue;
+        }
+
+#ifdef DEBUG_SBC_SPI
+            cli_printf("REGULATOR_CTRL_REG R RX0: %d, RX1: %d\n", rxData[0], rxData[1]);
+#endif
+
+        // check if not ok
+        if((rxData[1] & REGULATOR_CTRL_PDC_MASK) !=
+           (REGULATOR_CTRL_PDC_HIGH << REGULATOR_CTRL_PDC_BIT))
+        {
+            // error
+            // output to the user
+            cli_printfError("SBC ERROR: failed to verify REGULATOR_CTRL_REG! %d\n", lvRetValue);
+
+            // return the error
+            lvRetValue = -1;
+            return lvRetValue;
+        }
+       
+
+
+       
         // turn off the watchdog until the mode is set in the main loop
         // set the watchdog off
         lvRetValue = sbc_setWatchdogMode(WD_AUTONOMOUS, FAST_WATCHDOG);
@@ -652,7 +706,7 @@ int sbc_initialize(bool skipSelfTest)
 
         cli_printf("Setting SBC to normal mode!\n");
 
-        // lock the mutex 
+        // lock the mutex
         pthread_mutex_lock(&gWatchdogLock);
 
         // set the SBC to normal mode, without setting the watchdog on
@@ -661,7 +715,7 @@ int sbc_initialize(bool skipSelfTest)
         // set the normal mode
         txData[1] = MODE_CONTROL_NORMAL_MODE;
 
-        // set the address and set it in write mode 
+        // set the address and set it in write mode
         txData[0] = (MODE_CTRL_REG_ADR << 1) + WRITE_BIT;
 
         // write the data to the SBC
@@ -677,8 +731,8 @@ int sbc_initialize(bool skipSelfTest)
             cli_printfError("SBC ERROR: failed to set mode! %d\n", lvRetValue);
         }
 
-        // check the mode 
-        // set the address and set it in read mode 
+        // check the mode
+        // set the address and set it in read mode
         txData[0] = (MODE_CTRL_REG_ADR << 1) + READ_BIT;
 
         // read the data from the SBC
@@ -700,7 +754,7 @@ int sbc_initialize(bool skipSelfTest)
             cli_printfError("SBC ERROR: Couldn't verify SBC mode! %d != %d\n", (rxData[1] & MODE_CONTROL_WRITE_MASK), txData[1]);
         }
 
-        // unlock the mutex 
+        // unlock the mutex
         pthread_mutex_unlock(&gWatchdogLock);
 
         // check for errors
@@ -715,7 +769,7 @@ int sbc_initialize(bool skipSelfTest)
 
         lvRetValue = 0;
 
-        // the SBC is initialized 
+        // the SBC is initialized
         gSbcInitialized = true;
 
         // Check if the self-test shouldn't be skipped
@@ -729,12 +783,12 @@ int sbc_initialize(bool skipSelfTest)
         lvRetValue = 0;
     }
 
-    // return 
+    // return
     return lvRetValue;
 }
 
 /*!
- * @brief   This function is used to verify the SBC using SPI 
+ * @brief   This function is used to verify the SBC using SPI
  *          It will check the Device identification register (0x7E)
  *          
  * @param   None
@@ -763,8 +817,8 @@ int sbc_verifySbc(void)
         // return the error
         return lvRetValue;
     }
-	
-	// output to the user
+
+// output to the user
     cli_printfError("SBC Dev ID: 0x%x\n", rxData[1]);
 
     // make it be wrong again
@@ -773,20 +827,20 @@ int sbc_verifySbc(void)
     // check if the returned ID is expected
     if((rxData[1] == UJA1169TK_F_3_ID) || (rxData[1] == UJA1169ATK_3_ID))
     {
-        // output to the user 
+        // output to the user
         //cli_printf("SBC ID verified!\n");
 
         // set the returnvalue to 0 (OK)
         lvRetValue = 0;
     }
 
-    // return to the user 
+    // return to the user
     return lvRetValue;
 }
 
 /*!
  * @brief   this function is used to set the SBC mode
- * @note    Multi-thread protected 
+ * @note    Multi-thread protected
  *          
  * @param   newMode the new mode from the sbc_mode_t enum
  *
@@ -799,16 +853,16 @@ int sbc_setSbcMode(sbc_mode_t newMode)
     uint8_t rxData[2];
     uint8_t globalEventStat;
 
-    // lock the mutex 
+    // lock the mutex
     pthread_mutex_lock(&gWatchdogLock);
 
     // calculate the tx data
     switch(newMode)
     {
-        // in case of sleep mode 
-        case SBC_SLEEP: 
+        // in case of sleep mode
+        case SBC_SLEEP:
 
-            // unlock the mutex 
+            // unlock the mutex
             pthread_mutex_unlock(&gWatchdogLock);
 
             // turn off the watchdog
@@ -817,7 +871,7 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                 cli_printfError("SBC ERROR: Couldn't set the watchdog to autonomous mode (off) 2\n");
             }
 
-            // lock the mutex 
+            // lock the mutex
             pthread_mutex_lock(&gWatchdogLock);
 
             // check if wake-up is enabled
@@ -834,7 +888,7 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                 // output to the user
                 cli_printfError("SBC ERROR: failed to read wake status! %d\n", lvRetValue);
 
-                // unlock the mutex 
+                // unlock the mutex
                 pthread_mutex_unlock(&gWatchdogLock);
 
                 // return the error
@@ -843,11 +897,11 @@ int sbc_setSbcMode(sbc_mode_t newMode)
 
             if((rxData[1] & 3) == 0)
             {
-                // error 
+                // error
                 cli_printfError("SBC ERROR: Wake isn't configured!\n");
                 lvRetValue = -1;
 
-                // unlock the mutex 
+                // unlock the mutex
                 pthread_mutex_unlock(&gWatchdogLock);
 
                 // return
@@ -855,7 +909,7 @@ int sbc_setSbcMode(sbc_mode_t newMode)
             }
 
             // check if SLPC = 0
-            // read the SBC_CONF_CTRL_REG 
+            // read the SBC_CONF_CTRL_REG
             txData[0] = (SBC_CONF_CTRL_REG_ADR << 1) + READ_BIT;
             txData[1] = 0;
 
@@ -868,7 +922,7 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                 // output to the user
                 cli_printfError("SBC ERROR: failed to read SBC_CONF_CTRL_REG! %d\n", lvRetValue);
 
-                // unlock the mutex 
+                // unlock the mutex
                 pthread_mutex_unlock(&gWatchdogLock);
 
                 // return the error
@@ -882,14 +936,14 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                 cli_printfError("SBC ERROR: SBC CONF isn't configured!\n");
                 lvRetValue = -1;
 
-                // unlock the mutex 
+                // unlock the mutex
                 pthread_mutex_unlock(&gWatchdogLock);
 
                 // return
                 return lvRetValue;
             }
 
-            // read the GLOBAL_EVENT_STAT_REG 
+            // read the GLOBAL_EVENT_STAT_REG
             txData[0] = (GLOBAL_EVENT_STAT_REG_ADR << 1) + READ_BIT;
             txData[1] = 0;
 
@@ -902,7 +956,7 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                 // output to the user
                 cli_printfError("SBC ERROR: failed to read GLOBAL_EVENT_STAT_REG_ADR! %d\n", lvRetValue);
 
-                // unlock the mutex 
+                // unlock the mutex
                 pthread_mutex_unlock(&gWatchdogLock);
 
                 // return the error
@@ -932,10 +986,10 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                     if(lvRetValue)
                     {
                         // output to the user
-                        cli_printfError("SBC ERROR: failed to read WAKE_PIN_EVENT_STAT_REG_ADR! %d\n", 
+                        cli_printfError("SBC ERROR: failed to read WAKE_PIN_EVENT_STAT_REG_ADR! %d\n",
                             lvRetValue);
 
-                        // unlock the mutex 
+                        // unlock the mutex
                         pthread_mutex_unlock(&gWatchdogLock);
 
                         // return the error
@@ -962,10 +1016,10 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                         if(lvRetValue)
                         {
                             // output to the user
-                            cli_printfError("SBC ERROR: failed to write WAKE_PIN_EVENT_STAT_REG_ADR! %d\n", 
+                            cli_printfError("SBC ERROR: failed to write WAKE_PIN_EVENT_STAT_REG_ADR! %d\n",
                                 lvRetValue);
 
-                            // unlock the mutex 
+                            // unlock the mutex
                             pthread_mutex_unlock(&gWatchdogLock);
 
                             // return the error
@@ -983,10 +1037,10 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                         if(lvRetValue)
                         {
                             // output to the user
-                            cli_printfError("SBC ERROR: failed to read WAKE_PIN_EVENT_STAT_REG_ADR! %d\n", 
+                            cli_printfError("SBC ERROR: failed to read WAKE_PIN_EVENT_STAT_REG_ADR! %d\n",
                                 lvRetValue);
 
-                            // unlock the mutex 
+                            // unlock the mutex
                             pthread_mutex_unlock(&gWatchdogLock);
 
                             // return the error
@@ -998,12 +1052,12 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                         if(rxData[1] & WAKE_PIN_EVENT_STAT_MASK)
                         {
                             // output to the user
-                            cli_printfError("SBC ERROR: failed to reset WAKE_PIN_EVENT_STAT_REG_ADR! %d\n", 
+                            cli_printfError("SBC ERROR: failed to reset WAKE_PIN_EVENT_STAT_REG_ADR! %d\n",
                                 rxData[1] & WAKE_PIN_EVENT_STAT_MASK);
 
                             lvRetValue = -1;
 
-                            // unlock the mutex 
+                            // unlock the mutex
                             pthread_mutex_unlock(&gWatchdogLock);
 
                             // return the error
@@ -1026,10 +1080,10 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                     if(lvRetValue)
                     {
                         // output to the user
-                        cli_printfError("SBC ERROR: failed to read TRANSC_EVENT_STAT_REG_ADR! %d\n", 
+                        cli_printfError("SBC ERROR: failed to read TRANSC_EVENT_STAT_REG_ADR! %d\n",
                             lvRetValue);
 
-                        // unlock the mutex 
+                        // unlock the mutex
                         pthread_mutex_unlock(&gWatchdogLock);
 
                         // return the error
@@ -1056,10 +1110,10 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                         if(lvRetValue)
                         {
                             // output to the user
-                            cli_printfError("SBC ERROR: failed to write WAKE_PIN_EVENT_STAT_REG_ADR! %d\n", 
+                            cli_printfError("SBC ERROR: failed to write WAKE_PIN_EVENT_STAT_REG_ADR! %d\n",
                                 lvRetValue);
 
-                            // unlock the mutex 
+                            // unlock the mutex
                             pthread_mutex_unlock(&gWatchdogLock);
 
                             // return the error
@@ -1077,10 +1131,10 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                         if(lvRetValue)
                         {
                             // output to the user
-                            cli_printfError("SBC ERROR: failed to read TRANSC_EVENT_STAT_REG_ADR! %d\n", 
+                            cli_printfError("SBC ERROR: failed to read TRANSC_EVENT_STAT_REG_ADR! %d\n",
                                 lvRetValue);
 
-                            // unlock the mutex 
+                            // unlock the mutex
                             pthread_mutex_unlock(&gWatchdogLock);
 
                             // return the error
@@ -1092,12 +1146,12 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                         if(rxData[1] & TRANSC_EVENT_STAT_MASK)
                         {
                             // output to the user
-                            cli_printfError("SBC ERROR: failed to reset TRANSC_EVENT_STAT_REG_ADR! %d\n", 
+                            cli_printfError("SBC ERROR: failed to reset TRANSC_EVENT_STAT_REG_ADR! %d\n",
                                 rxData[1] & TRANSC_EVENT_STAT_MASK);
 
                             lvRetValue = -1;
 
-                            // unlock the mutex 
+                            // unlock the mutex
                             pthread_mutex_unlock(&gWatchdogLock);
 
                             // return the error
@@ -1120,10 +1174,10 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                     if(lvRetValue)
                     {
                         // output to the user
-                        cli_printfError("SBC ERROR: failed to read SUPPLY_EVENT_STAT_REG_ADR! %d\n", 
+                        cli_printfError("SBC ERROR: failed to read SUPPLY_EVENT_STAT_REG_ADR! %d\n",
                             lvRetValue);
 
-                        // unlock the mutex 
+                        // unlock the mutex
                         pthread_mutex_unlock(&gWatchdogLock);
 
                         // return the error
@@ -1150,10 +1204,10 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                         if(lvRetValue)
                         {
                             // output to the user
-                            cli_printfError("SBC ERROR: failed to write SUPPLY_EVENT_STAT_REG_ADR! %d\n", 
+                            cli_printfError("SBC ERROR: failed to write SUPPLY_EVENT_STAT_REG_ADR! %d\n",
                                 lvRetValue);
 
-                            // unlock the mutex 
+                            // unlock the mutex
                             pthread_mutex_unlock(&gWatchdogLock);
 
                             // return the error
@@ -1172,10 +1226,10 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                         if(lvRetValue)
                         {
                             // output to the user
-                            cli_printfError("SBC ERROR: failed to read SUPPLY_EVENT_STAT_REG_ADR! %d\n", 
+                            cli_printfError("SBC ERROR: failed to read SUPPLY_EVENT_STAT_REG_ADR! %d\n",
                                 lvRetValue);
 
-                            // unlock the mutex 
+                            // unlock the mutex
                             pthread_mutex_unlock(&gWatchdogLock);
 
                             // return the error
@@ -1186,12 +1240,12 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                         if(rxData[1] & SUPPLY_EVENT_STAT_MASK)
                         {
                             // output to the user
-                            cli_printfError("SBC ERROR: failed to reset SUPPLY_EVENT_STAT_REG_ADR! %d\n", 
+                            cli_printfError("SBC ERROR: failed to reset SUPPLY_EVENT_STAT_REG_ADR! %d\n",
                                 rxData[1] & SUPPLY_EVENT_STAT_MASK);
 
                             lvRetValue = -1;
 
-                            // unlock the mutex 
+                            // unlock the mutex
                             pthread_mutex_unlock(&gWatchdogLock);
 
                             // return the error
@@ -1214,10 +1268,10 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                     if(lvRetValue)
                     {
                         // output to the user
-                        cli_printfError("SBC ERROR: failed to read SYS_EVENT_STAT_REG_ADR! %d\n", 
+                        cli_printfError("SBC ERROR: failed to read SYS_EVENT_STAT_REG_ADR! %d\n",
                             lvRetValue);
 
-                        // unlock the mutex 
+                        // unlock the mutex
                         pthread_mutex_unlock(&gWatchdogLock);
 
                         // return the error
@@ -1244,10 +1298,10 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                         if(lvRetValue)
                         {
                             // output to the user
-                            cli_printfError("SBC ERROR: failed to write WAKE_PIN_EVENT_STAT_REG_ADR! %d\n", 
+                            cli_printfError("SBC ERROR: failed to write WAKE_PIN_EVENT_STAT_REG_ADR! %d\n",
                                 lvRetValue);
 
-                            // unlock the mutex 
+                            // unlock the mutex
                             pthread_mutex_unlock(&gWatchdogLock);
 
                             // return the error
@@ -1265,10 +1319,10 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                         if(lvRetValue)
                         {
                             // output to the user
-                            cli_printfError("SBC ERROR: failed to read SYS_EVENT_STAT_REG_ADR! %d\n", 
+                            cli_printfError("SBC ERROR: failed to read SYS_EVENT_STAT_REG_ADR! %d\n",
                                 lvRetValue);
 
-                            // unlock the mutex 
+                            // unlock the mutex
                             pthread_mutex_unlock(&gWatchdogLock);
 
                             // return the error
@@ -1279,14 +1333,14 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                         if(rxData[1] & SYS_EVENT_STAT_MASK)
                         {
                             // output to the user
-                            cli_printfError("SBC ERROR: failed to reset SYS_EVENT_STAT_REG_ADR! %d\n", 
+                            cli_printfError("SBC ERROR: failed to reset SYS_EVENT_STAT_REG_ADR! %d\n",
                                 rxData[1] & SYS_EVENT_STAT_MASK);
 
                             lvRetValue = -1;
 
-                            // unlock the mutex 
+                            // unlock the mutex
                             pthread_mutex_unlock(&gWatchdogLock);
-                            
+                           
                             // return the error
                             return lvRetValue;
                         }
@@ -1294,7 +1348,7 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                 }
 
                 // read the global register again
-                // read the GLOBAL_EVENT_STAT_REG 
+                // read the GLOBAL_EVENT_STAT_REG
                 txData[0] = (GLOBAL_EVENT_STAT_REG_ADR << 1) + READ_BIT;
                 txData[1] = 0;
 
@@ -1305,10 +1359,10 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                 if(lvRetValue)
                 {
                     // output to the user
-                    cli_printfError("SBC ERROR: failed to read GLOBAL_EVENT_STAT_REG_ADR! %d\n", 
+                    cli_printfError("SBC ERROR: failed to read GLOBAL_EVENT_STAT_REG_ADR! %d\n",
                         lvRetValue);
 
-                    // unlock the mutex 
+                    // unlock the mutex
                     pthread_mutex_unlock(&gWatchdogLock);
 
                     // return the error
@@ -1319,12 +1373,12 @@ int sbc_setSbcMode(sbc_mode_t newMode)
                 if(rxData[1] & GLOBAL_EVENT_STAT_MASK)
                 {
                     // output to the user
-                    cli_printfError("SBC ERROR: failed to reset GLOBAL_EVENT_STAT_REG_ADR! %d\n", 
+                    cli_printfError("SBC ERROR: failed to reset GLOBAL_EVENT_STAT_REG_ADR! %d\n",
                         rxData[1] & GLOBAL_EVENT_STAT_MASK);
 
                     lvRetValue = -1;
 
-                    // unlock the mutex 
+                    // unlock the mutex
                     pthread_mutex_unlock(&gWatchdogLock);
 
                     // return the error
@@ -1337,10 +1391,10 @@ int sbc_setSbcMode(sbc_mode_t newMode)
 
             // set the sleep mode
             txData[1] = MODE_CONTROL_SLEEP_MODE;
-    
+   
         break;
 
-        // in case of the standby mode 
+        // in case of the standby mode
         case SBC_STANDBY:
 
             // set the sleep mode
@@ -1348,7 +1402,7 @@ int sbc_setSbcMode(sbc_mode_t newMode)
 
         break;
 
-        // in case of the standby mode 
+        // in case of the standby mode
         case SBC_NORMAL:
 
             // set the sleep mode
@@ -1357,7 +1411,7 @@ int sbc_setSbcMode(sbc_mode_t newMode)
         break;
     }
 
-    // set the address and set it in write mode 
+    // set the address and set it in write mode
     txData[0] = (MODE_CTRL_REG_ADR << 1) + WRITE_BIT;
 
     // write the data to the SBC
@@ -1373,8 +1427,8 @@ int sbc_setSbcMode(sbc_mode_t newMode)
         cli_printfError("SBC ERROR: failed to set mode! %d\n", lvRetValue);
     }
 
-    // check the mode 
-    // set the address and set it in read mode 
+    // check the mode
+    // set the address and set it in read mode
     txData[0] = (MODE_CTRL_REG_ADR << 1) + READ_BIT;
 
     // read the data from the SBC
@@ -1396,7 +1450,7 @@ int sbc_setSbcMode(sbc_mode_t newMode)
         cli_printfError("SBC ERROR: Couldn't verify SBC mode! %d != %d\n", (rxData[1] & MODE_CONTROL_WRITE_MASK), txData[1]);
     }
 
-    // unlock the mutex 
+    // unlock the mutex
     pthread_mutex_unlock(&gWatchdogLock);
 
     // check if the watchdog needs to be off
@@ -1424,19 +1478,19 @@ int sbc_setSbcMode(sbc_mode_t newMode)
             cli_printfError("SBC ERROR: Couldn't set the watchdog to autonomous mode (off) 3\n");
         }
 #endif
-    }   
+    }  
 
     // return to the user
     return lvRetValue;
 }
 
 /*!
- * @brief   this function is used to get the SBC mode 
+ * @brief   this function is used to get the SBC mode
  * @note    Multi-thread protected
  *          
  * @param   None
  *
- * @return  If successful, the function will return the new mode from the sbc_mode_t enum. 
+ * @return  If successful, the function will return the new mode from the sbc_mode_t enum.
  *          Otherwise negative (-1 or -2)
  */
 int sbc_getSbcMode(void)
@@ -1445,8 +1499,8 @@ int sbc_getSbcMode(void)
     uint8_t txData[2];
     uint8_t rxData[2];
 
-    // check the mode 
-    // set the address and set it in read mode 
+    // check the mode
+    // set the address and set it in read mode
     txData[0] = (MODE_CTRL_REG_ADR << 1) + READ_BIT;
 
     // read the data from the SBC
@@ -1456,7 +1510,7 @@ int sbc_getSbcMode(void)
     if(lvRetValue)
     {
         cli_printfError("SBC ERROR: failed to get mode! %d\n", lvRetValue);
-        // set return value to -1 
+        // set return value to -1
         lvRetValue = -1;
     }
     else
@@ -1465,20 +1519,20 @@ int sbc_getSbcMode(void)
         switch(rxData[1] & MODE_CONTROL_WRITE_MASK)
         {
             case MODE_CONTROL_SLEEP_MODE:
-                // set the return value 
+                // set the return value
                 lvRetValue = SBC_SLEEP;
             break;
             case MODE_CONTROL_STANDBY_MODE:
-                // set the return value 
+                // set the return value
                 lvRetValue = SBC_STANDBY;
             break;
             case MODE_CONTROL_NORMAL_MODE:
-                // set the return value 
+                // set the return value
                 lvRetValue = SBC_NORMAL;
             break;
             default:
                 cli_printfError("Wrong mode: Rx: 0x%x and 0x%x\n", rxData[0], rxData[1]);
-                // set the return value 
+                // set the return value
                 lvRetValue = -2;
             break;
         }
@@ -1489,7 +1543,7 @@ int sbc_getSbcMode(void)
 }
 
 /*!
- * @brief   this function is used to set the CAN FD mode on or off 
+ * @brief   this function is used to set the CAN FD mode on or off
  *          
  * @param   on if true, CAN FD will be tollerated, if false it will not
  *
@@ -1538,8 +1592,8 @@ int sbc_setCANFDMode(bool on)
 }
 
 /*!
- * @brief   this function is used to kick the watchdog, which will reset it. 
- * @note    Multi-thread protected 
+ * @brief   this function is used to kick the watchdog, which will reset it.
+ * @note    Multi-thread protected
  *          
  * @param   none
  *
@@ -1555,7 +1609,7 @@ int sbc_kickTheWatchdog(void)
     uint32_t timeDifference;
     static maxTimeDifference = 0;
     static bool firstTime = true;
-    static struct timespec oldTime  =   {.tv_sec = 2, 
+    static struct timespec oldTime  =   {.tv_sec = 2,
                                         .tv_nsec = 0};
 #endif
 
@@ -1569,7 +1623,7 @@ int sbc_kickTheWatchdog(void)
         return lvRetValue;
     }
 
-    // lock the mutex 
+    // lock the mutex
     pthread_mutex_lock(&gWatchdogLock);
 
     // read the watchdog control register to get the mode and the period
@@ -1588,7 +1642,7 @@ int sbc_kickTheWatchdog(void)
     // if it went ok
     else
     {
-        // make the watchdog control register value 
+        // make the watchdog control register value
         // and write the register again to reset the watchdog
         txData[0] = (WATCHDOG_CTRL_REG_ADR << 1) + WRITE_BIT;
         txData[1] = rxData[1];
@@ -1651,17 +1705,17 @@ int sbc_kickTheWatchdog(void)
 
 #endif
 
-    // unlock the mutex 
+    // unlock the mutex
     pthread_mutex_unlock(&gWatchdogLock);
 
     // return
     return lvRetValue;
 }
 
-/*! 
- * @brief   this function is used to set a new watchdog mode in the SBC. 
- * @warning keep in mind that change the watchdog mode means disabling 5V (CAN tranceiver) briefly 
- * @note    Multi-thread protected 
+/*!
+ * @brief   this function is used to set a new watchdog mode in the SBC.
+ * @warning keep in mind that change the watchdog mode means disabling 5V (CAN tranceiver) briefly
+ * @note    Multi-thread protected
  *
  * @param   newMode The new watchdog mode from the watchdogModes_t enum.
  * @param   slow True if the watchdog needs to be slow, false otherwise
@@ -1686,13 +1740,13 @@ int sbc_setWatchdogMode(watchdogMode_t newMode, bool slow)
         return lvRetValue;
     }
 
-    // lock the mutex 
+    // lock the mutex
     pthread_mutex_lock(&gWatchdogLock);
 
     // check if the watchdog needs to be slow
     if(slow)
     {
-        // set the slow speed 
+        // set the slow speed
         watchdogspeed = WATCHDOG_PERIOD_SLOW;
         // cli_printf("WatchdogMode slow\n");
 
@@ -1705,7 +1759,7 @@ int sbc_setWatchdogMode(watchdogMode_t newMode, bool slow)
     // if it needs to be fase
     else
     {
-        // set the fast speed 
+        // set the fast speed
         watchdogspeed = WATCHDOG_PERIOD_FAST;
         // cli_printf("WatchdogMode fast\n");
     }
@@ -1736,9 +1790,9 @@ int sbc_setWatchdogMode(watchdogMode_t newMode, bool slow)
             case WD_AUTONOMOUS:
 
                 // check if already in this mode and if the watchdog time is the same
-                if((((rxData[1] >> WATCHDOG_CTRL_WMC_BIT) & WATCHDOG_CTRL_WMC_MASK) == WATCHDOG_CTRL_WMC_AUTONOM) && 
+                if((((rxData[1] >> WATCHDOG_CTRL_WMC_BIT) & WATCHDOG_CTRL_WMC_MASK) == WATCHDOG_CTRL_WMC_AUTONOM) &&
                     (((rxData[1] >> WATCHDOG_CTRL_NWP_BIT) & WATCHDOG_CTRL_NWP_MASK) == watchdogspeed))
-                {                   
+                {                  
                     // state that you are already in this mode
                     alreadyInThisMode = true;
                 }
@@ -1754,7 +1808,7 @@ int sbc_setWatchdogMode(watchdogMode_t newMode, bool slow)
             case WD_TIMEOUT:
 
                 // check if already in this mode and if the watchdog time is the same
-                if((((rxData[1] >> WATCHDOG_CTRL_WMC_BIT) & WATCHDOG_CTRL_WMC_MASK) == WATCHDOG_CTRL_WMC_TIMEOUT) && 
+                if((((rxData[1] >> WATCHDOG_CTRL_WMC_BIT) & WATCHDOG_CTRL_WMC_MASK) == WATCHDOG_CTRL_WMC_TIMEOUT) &&
                     (((rxData[1] >> WATCHDOG_CTRL_NWP_BIT) & WATCHDOG_CTRL_NWP_MASK) == watchdogspeed))
                 {
                     // state that you are already in this mode
@@ -1772,14 +1826,14 @@ int sbc_setWatchdogMode(watchdogMode_t newMode, bool slow)
             case WD_WINDOW:
 
                 // check if already in this mode and if the watchdog time is the same
-                if((((rxData[1] >> WATCHDOG_CTRL_WMC_BIT) & WATCHDOG_CTRL_WMC_MASK) == WATCHDOG_CTRL_WMC_WINDOW) && 
+                if((((rxData[1] >> WATCHDOG_CTRL_WMC_BIT) & WATCHDOG_CTRL_WMC_MASK) == WATCHDOG_CTRL_WMC_WINDOW) &&
                     (((rxData[1] >> WATCHDOG_CTRL_NWP_BIT) & WATCHDOG_CTRL_NWP_MASK) == watchdogspeed))
                 {
                     // state that you are already in this mode
                     alreadyInThisMode = true;
                 }
                 else
-                {                   
+                {                  
                     // make the new register value
                     newWDModeReg = (WATCHDOG_CTRL_WMC_WINDOW << WATCHDOG_CTRL_WMC_BIT) + watchdogspeed;
                 }
@@ -1791,7 +1845,7 @@ int sbc_setWatchdogMode(watchdogMode_t newMode, bool slow)
         if(!alreadyInThisMode)
         {
             // read the SBC mode
-            // set the address and set it in read mode 
+            // set the address and set it in read mode
             txData[0] = (MODE_CTRL_REG_ADR << 1) + READ_BIT;
 
             // write the data to the SBC
@@ -1806,13 +1860,13 @@ int sbc_setWatchdogMode(watchdogMode_t newMode, bool slow)
             // check if not STANDBY, set standby mode
             if((rxData[1] & MODE_CONTROL_WRITE_MASK) != MODE_CONTROL_STANDBY_MODE)
             {
-                // save the old mode register 
+                // save the old mode register
                 oldSBCModeReg = rxData[1] & MODE_CONTROL_WRITE_MASK;
 
                 cli_printfWarning("NOTICE: Disabling 5V regulator (CAN transceiver) briefly!\n");
 
-                // set the mode to standby 
-                // set the address and set it in write mode 
+                // set the mode to standby
+                // set the address and set it in write mode
                 txData[0] = (MODE_CTRL_REG_ADR << 1) + WRITE_BIT;
                 txData[1] = MODE_CONTROL_STANDBY_MODE;
 
@@ -1825,9 +1879,9 @@ int sbc_setWatchdogMode(watchdogMode_t newMode, bool slow)
                     cli_printfError("SBC ERROR: failed to set mode! %d\n", lvRetValue);
                 }
 
-                // check the mode 
+                // check the mode
                 // read the SBC mode
-                // set the address and set it in read mode 
+                // set the address and set it in read mode
                 txData[0] = (MODE_CTRL_REG_ADR << 1) + READ_BIT;
 
                 // write the data to the SBC
@@ -1870,7 +1924,7 @@ int sbc_setWatchdogMode(watchdogMode_t newMode, bool slow)
                 }
                 else
                 {
-                    // read the WD mode 
+                    // read the WD mode
                     txData[0] = (WATCHDOG_CTRL_REG_ADR << 1) + READ_BIT;
 
                     // write the data to the SBC
@@ -1879,7 +1933,7 @@ int sbc_setWatchdogMode(watchdogMode_t newMode, bool slow)
                     // check if it went not ok
                     if(lvRetValue || (rxData[1] != newWDModeReg))
                     {
-                        cli_printfError("SBC ERROR: failed to set or read WD mode! %d 0x%x != 0x%x\n", 
+                        cli_printfError("SBC ERROR: failed to set or read WD mode! %d 0x%x != 0x%x\n",
                             lvRetValue, rxData[1], newWDModeReg);
 
                         // set the error value
@@ -1891,7 +1945,7 @@ int sbc_setWatchdogMode(watchdogMode_t newMode, bool slow)
             // check if a new mode was set
             if(oldSBCModeReg != MODE_CONTROL_STANDBY_MODE)
             {
-                // return to old SBC mode 
+                // return to old SBC mode
                 txData[0] = (MODE_CTRL_REG_ADR << 1) + WRITE_BIT;
                 txData[1] = oldSBCModeReg;
 
@@ -1928,7 +1982,7 @@ int sbc_setWatchdogMode(watchdogMode_t newMode, bool slow)
         }
     }
 
-    // unlock the mutex 
+    // unlock the mutex
     pthread_mutex_unlock(&gWatchdogLock);
 
     // return
@@ -1939,7 +1993,7 @@ int sbc_setWatchdogMode(watchdogMode_t newMode, bool slow)
  * private Functions
  ****************************************************************************/
 
-/*! 
+/*!
  * @brief   this function is used to program the START_UP_CTRL_REG, SBC_CONF_CTRL_REG, MTPNV_CRC_CTRL
  *          Make sure it can be programmed
 */
@@ -1969,7 +2023,7 @@ int programNVMPSRegisters(void)
         return lvRetValue;
     }
 
-    // write the SBC configuration register 
+    // write the SBC configuration register
     txData[0] = (SBC_CONF_CTRL_REG_ADR << 1) + WRITE_BIT;
     txData[1] = SBC_CONF_CTRL_REG_VAL;
 
@@ -2059,12 +2113,12 @@ int programNVMPSRegisters(void)
     return lvRetValue;
 }
 
-/*! 
+/*!
  * @brief   this function is used to check if the NRST pin is connected to the SBC
  *
  * @param   none
  *
- * @return  1 if OK, 0 if not OK and negative if error 
+ * @return  1 if OK, 0 if not OK and negative if error
  */
 int checkNrstLine(void)
 {
@@ -2097,7 +2151,7 @@ int checkNrstLine(void)
         if(ret <= 0)
         {
             cli_printfError("SBC ERROR: Can't read nrstcheck fs: %d\n", ret);
-            
+           
             // if ret == 0
             if(ret == 0)
             {
@@ -2119,13 +2173,13 @@ int checkNrstLine(void)
             if(nrstOke != 0 && nrstOke != 1)
             {
                 // error ouptut 
-                cli_printfError("SBC ERROR: Wrong conversion? %s -> %d\n", 
+                cli_printfError("SBC ERROR: Wrong conversion? %s -> %d\n",
                     readData, nrstOke);
 
                 // check if larger than 1
                 if(nrstOke > 1)
                 {
-                    // make negative 
+                    // make negative
                     nrstOke *= -1;
                 }
             }
