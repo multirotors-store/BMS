@@ -276,48 +276,63 @@
 
 // defines used for the NDEF message payload
 #define NDEF_HEADER_STRING_LEGHT        13
+
 #define V_OUT_STRING                    "v-out: xx.xxxv\n"
 #define V_OUT_STRING_BEGIN_INDEX        NDEF_HEADER_STRING_LEGHT                 
 #define V_OUT_STRING_DATA_INDEX         7 + V_OUT_STRING_BEGIN_INDEX
 #define V_OUT_STRING_LENGHT             15
 #define V_OUT_STRING_DATA_LENGHT        V_OUT_STRING_LENGHT - 7 - 1
+
 #define C_BATT_STRING                   "c-batt: xxx.xC\n"
 #define C_BATT_STRING_BEGIN_INDEX       V_OUT_STRING_BEGIN_INDEX + V_OUT_STRING_LENGHT
 #define C_BATT_STRING_DATA_INDEX        8 + C_BATT_STRING_BEGIN_INDEX
 #define C_BATT_STRING_LENGHT            15
 #define C_BATT_STRING_DATA_LENGHT       C_BATT_STRING_LENGHT - 8 - 1
+
 #define S_CHARGE_STRING                 "s-charge: xxx%\n"
 #define S_CHARGE_STRING_BEGIN_INDEX     C_BATT_STRING_BEGIN_INDEX + C_BATT_STRING_LENGHT
 #define S_CHARGE_STRING_DATA_INDEX      10 + S_CHARGE_STRING_BEGIN_INDEX 
 #define S_CHARGE_STRING_LENGHT          15
 #define S_CHARGE_STRING_DATA_LENGHT     S_CHARGE_STRING_LENGHT - 10 - 1
+
 #define S_HEALTH_STRING                 "s-health: xxx%\n"
 #define S_HEALTH_STRING_BEGIN_INDEX     S_CHARGE_STRING_BEGIN_INDEX + S_CHARGE_STRING_LENGHT
 #define S_HEALTH_STRING_DATA_INDEX      10 + S_HEALTH_STRING_BEGIN_INDEX
 #define S_HEALTH_STRING_LENGHT          15
 #define S_HEALTH_STRING_DATA_LENGHT     S_HEALTH_STRING_LENGHT - 10 - 1
+
 #define I_OUT_STRING                    "i-out: xxx.xxxA\n"
 #define I_OUT_STRING_BEGIN_INDEX        S_HEALTH_STRING_BEGIN_INDEX + S_HEALTH_STRING_LENGHT
 #define I_OUT_STRING_DATA_INDEX         7 + I_OUT_STRING_BEGIN_INDEX
 #define I_OUT_STRING_LENGHT             16
 #define I_OUT_STRING_DATA_LENGHT        I_OUT_STRING_LENGHT - 7 - 1
+
 #define N_CHARGES_STRING                "n-charges: xxxxx\n"
 #define N_CHARGES_STRING_BEGIN_INDEX    I_OUT_STRING_BEGIN_INDEX + I_OUT_STRING_LENGHT
 #define N_CHARGES_STRING_DATA_INDEX     11 + N_CHARGES_STRING_BEGIN_INDEX
 #define N_CHARGES_STRING_LENGHT         17
 #define N_CHARGES_STRING_DATA_LENGHT    N_CHARGES_STRING_LENGHT - 11 
+
 #define BATT_ID_STRING                  "batt-id: xxx\n"
 #define BATT_ID_STRING_BEGIN_INDEX      N_CHARGES_STRING_BEGIN_INDEX + N_CHARGES_STRING_LENGHT
 #define BATT_ID_STRING_DATA_INDEX       9 + BATT_ID_STRING_BEGIN_INDEX
 #define BATT_ID_STRING_LENGHT           13
 #define BATT_ID_STRING_DATA_LENGHT      BATT_ID_STRING_LENGHT - 9 
+
 #define MODEL_ID_STRING                 "model-id: xxxxxxxxxxxxxxxxxxxx\n"
 #define MODEL_ID_STRING_BEGIN_INDEX     BATT_ID_STRING_BEGIN_INDEX + BATT_ID_STRING_LENGHT
 #define MODEL_ID_STRING_DATA_INDEX      10 + MODEL_ID_STRING_BEGIN_INDEX
 #define MODEL_ID_STRING_LENGHT          31
 #define MODEL_ID_STRING_DATA_LENGHT     MODEL_ID_STRING_LENGHT - 10
+
+#define VCELLS_STRING                    "v-cells[]: x.xx-x.xx-x.xx-x.xx-x.xx-x.xx\n"
+#define VCELLS_STRING_BEGIN_INDEX        MODEL_ID_STRING_BEGIN_INDEX + MODEL_ID_STRING_LENGHT
+#define VCELLS_STRING_DATA_INDEX         11 + VCELLS_STRING_BEGIN_INDEX
+#define VCELLS_STRING_LENGHT             41
+#define VCELLS_STRING_DATA_LENGHT        VCELLS_STRING_LENGHT - 11
+
 #define STATE_STRING                    "state: \0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\n"
-#define STATE_STRING_BEGIN_INDEX        MODEL_ID_STRING_BEGIN_INDEX + MODEL_ID_STRING_LENGHT
+#define STATE_STRING_BEGIN_INDEX        VCELLS_STRING_BEGIN_INDEX + VCELLS_STRING_LENGHT
 #define STATE_STRING_DATA_INDEX         7 + STATE_STRING_BEGIN_INDEX
 #define STATE_STRING_LENGHT             23
 #define STATE_STRING_DATA_LENGHT        STATE_STRING_LENGHT - 7
@@ -331,7 +346,7 @@
 #define NDEF_TEXT_RECORD_LENGHT         NDEF_HEADER_STRING_LEGHT + V_OUT_STRING_LENGHT + C_BATT_STRING_LENGHT + \
                                         S_CHARGE_STRING_LENGHT + S_HEALTH_STRING_LENGHT + I_OUT_STRING_LENGHT + \
                                         N_CHARGES_STRING_LENGHT +  BATT_ID_STRING_LENGHT + MODEL_ID_STRING_LENGHT + \
-                                        STATE_STRING_LENGHT + NDEF_TEXT_END_STRING_LENGHT
+                                        STATE_STRING_LENGHT + VCELLS_STRING_LENGHT + NDEF_TEXT_END_STRING_LENGHT
                                                                             
 #define NDEF_PAYLOAD_LENGTH             (NDEF_TEXT_RECORD_LENGHT - NDEF_HEADER_STRING_LEGHT) + 3
 
@@ -1262,6 +1277,7 @@ int nfc_updateBMSStatus(bool setOutdatedText, bool wakingUpMessage)
         strcpy((char *)&NDEFTxtRecord[N_CHARGES_STRING_BEGIN_INDEX], N_CHARGES_STRING);
         strcpy((char *)&NDEFTxtRecord[BATT_ID_STRING_BEGIN_INDEX], BATT_ID_STRING);
         strcpy((char *)&NDEFTxtRecord[MODEL_ID_STRING_BEGIN_INDEX], MODEL_ID_STRING);
+        strcpy((char *)&NDEFTxtRecord[VCELLS_STRING_BEGIN_INDEX], VCELLS_STRING);
         strcpy((char *)&NDEFTxtRecord[STATE_STRING_BEGIN_INDEX], STATE_STRING);
 
         // add the last character
@@ -1536,6 +1552,35 @@ int nfc_updateBMSStatus(bool setOutdatedText, bool wakingUpMessage)
 
             // overwrite the NULL character
             NDEFTxtRecord[MODEL_ID_STRING_DATA_INDEX+20] = '\n';
+
+            // get the model-id
+            float CellsVoltage[6] = {0.0,0.0,0.0,0.0,0.0,0.0};
+            uint8_t nCells;
+            // get the number of cells
+            if(data_getParameter(N_CELLS, &nCells, NULL) == NULL)
+            {
+                cli_printfError("nfc_updateBMSStatus ERROR: getting cell count went wrong!\n");
+                nCells = N_CELLS_DEFAULT;
+            }
+            for (uint8_t i = 0u; i < nCells; i++)
+            {
+                if(data_getParameter(V_CELL1+i, &CellsVoltage[i], NULL) == NULL)
+                {
+                    // set the default value
+                    uint64Val = MODEL_ID_DEFAULT;
+
+                    // error output
+                    cli_printfError("NFC ERROR: could not get v-cell[%d]!\n", i);
+                }
+            }
+
+            // convert the float value to a 6 digit string value
+            snprintf((char *)&NDEFTxtRecord[VCELLS_STRING_DATA_INDEX], VCELLS_STRING_DATA_LENGHT, 
+                "%.2f %.2f %.2f %.2f %.2f %.2f", CellsVoltage[0], CellsVoltage[1], CellsVoltage[2],
+                CellsVoltage[3], CellsVoltage[4], CellsVoltage[5]);
+
+            // overwrite the NULL character
+            NDEFTxtRecord[VCELLS_STRING_DATA_INDEX+29] = '\n';
 
             // get the state
             intValue = (int)data_getMainState();
